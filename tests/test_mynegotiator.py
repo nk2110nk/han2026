@@ -111,12 +111,22 @@ class TestMyNegotiator:
         # Check that negotiation completed
         assert m.state.step <= 5
 
-    def test_inherits_from_ollama_negotiator(self):
-        """Test that MyNegotiator properly inherits from OllamaNegotiator."""
-        from negmas_llm import OllamaNegotiator
+    def test_is_hybrid_llm_meta_negotiator(self):
+        """Test that MyNegotiator wraps a strategic base negotiator with LLM messaging."""
+        from negmas_llm.meta import LLMMetaNegotiator
+        from mynegotiator import BoulwareCompromiseNegotiator
 
         neg = MyNegotiator()
-        assert isinstance(neg, OllamaNegotiator)
+        assert isinstance(neg, LLMMetaNegotiator)
+        assert isinstance(neg.base_negotiator, BoulwareCompromiseNegotiator)
+
+    def test_template_text_can_run_without_llm(self):
+        """Test the deterministic messaging path used after early LLM steps."""
+        class State:
+            current_offer = None
+
+        neg = MyNegotiator(llm_first_steps=0)
+        assert neg._template_text(State(), "propose", (1, 2))  # type: ignore[arg-type]
 
     def test_different_temperatures_create_different_instances(self):
         """Test that different temperature values create distinct negotiators."""
